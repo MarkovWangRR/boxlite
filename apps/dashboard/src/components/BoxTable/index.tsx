@@ -31,6 +31,10 @@ import { BoxTableProps } from './types'
 import { useBoxCommands } from './useBoxCommands'
 import { useBoxTable } from './useBoxTable'
 
+// The one column that grows to fill leftover horizontal space; every other
+// column holds its natural width so actions stay in a fixed right rail.
+const FLEX_COLUMN_ID = 'name'
+
 function CompactBoxMeta({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="min-w-0 space-y-1">
@@ -292,9 +296,11 @@ export function BoxTable({
                             'sticky top-0 z-[3] border-b border-border/40 bg-card',
                             header.column.getCanSort() ? 'hover:bg-muted' : '',
                           )}
-                          style={{
-                            width: `${header.column.getSize()}px`,
-                          }}
+                          // `name` is the sole flex column: leaving its width unset lets
+                          // table-layout:fixed give it all the slack, so the remaining
+                          // columns keep their natural widths and snap into a tight right
+                          // rail instead of ballooning when few columns are visible.
+                          style={header.column.id === FLEX_COLUMN_ID ? undefined : { width: `${header.column.getSize()}px` }}
                         >
                           {header.isPlaceholder
                             ? null
@@ -341,9 +347,7 @@ export function BoxTable({
                         className={cn('border-b border-border/50', {
                           'group-hover/table-row:underline': cell.column.id === 'name',
                         })}
-                        style={{
-                          width: `${cell.column.getSize()}px`,
-                        }}
+                        style={cell.column.id === FLEX_COLUMN_ID ? undefined : { width: `${cell.column.getSize()}px` }}
                         sticky={cell.column.id === 'actions' ? 'right' : undefined}
                       >
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
